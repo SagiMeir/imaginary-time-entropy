@@ -1,0 +1,32 @@
+# Python caches
+__pycache__/
+*.pyc
+
+# Input data of the electron-gas test. electron_gas/reproduce_fc.py downloads it
+# from RODARE (doi:10.14278/rodare.3923) on the first run; the files are too
+# large for GitHub (up to 121 MB each).
+electron_gas/data/rodare3923/
+*.part
+
+# Exploratory scripts and their outputs. They are not used in the paper and
+# depend on files that are not in this repository.
+plot_3d.py
+plot_beta.py
+plot_v2.py
+regen.py
+sweep_beta.py
+benchmark_beta*.pdf
+benchmark_beta*.png
+benchmark_L*.pdf
+benchmark_L*.png
+benchmark_caption.tex
+entropy_data_beta.json
+entropy_data_L_v2.json
+scan_L.log
+electron_gas/data/DoubleRoton_Fig1a.txt
+
+# Editor and operating-system files
+.DS_Store
+.idea/
+.vscode/
+*.swp
