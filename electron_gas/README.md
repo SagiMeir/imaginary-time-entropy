@@ -1,4 +1,4 @@
-# Warm dense electron gas: Fig. 3 and Table S3
+# Warm dense electron gas: Fig. 3 and Table S2
 
 Code to reproduce the electron-gas test of the paper: the closed-form
 correlation free energy, Eq. (8) of the Letter (`Fcorr` in the code comments),

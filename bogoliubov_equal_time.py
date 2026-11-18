@@ -1,22 +1,23 @@
 """
 Bogoliubov gas: why the equal-time structure factor is not enough.
 
-Table S1 of the Supplemental Material and Fig. 1 of the Letter, with g the coupling constant of
+Fig. 1 of the Letter, with g the coupling constant of
 the Bogoliubov Hamiltonian. Units hbar = 2m = 1, energies in units of rho*g, eps_q = q^2,
 E_q = sqrt(eps_q^2 + 2 eps_q). For
 each mode q (the term of the sum over modes):
 
     exact          H_q = s(beta E_q) - s(beta eps_q),  s(y) = y/(e^y - 1) - ln(1 - e^-y)
     closed form    Eq. (Hex_explicit) for that mode, summed over Matsubara frequencies
-                   (plain sum to |n| <= NMAX for Table S1; with an exact tail for Fig. 1)
+                   (plain sum to |n| <= NMAX for the printed table; with an exact tail for Fig. 1)
     equal time     the classical relation (1/2)(ln r - r + 1), r = S(q)/S_0(q),
                    with S(q) = (eps_q/E_q) coth(beta E_q/2), S_0(q) = coth(beta eps_q/2)
 
-Table S1 lists single modes. Fig. 1 shows the excess entropy summed over all
-modes, with the density of modes V q^2 dq / 2 pi^2, per volume, -H_ex / V in units of
-(2 m rho g / hbar^2)^(3/2), as a function of beta*rho*g, the only parameter it depends on.
+The printed table lists single modes, as a check (it is not in the paper).
+Fig. 1 shows the excess entropy summed over all modes, with the density of modes
+V q^2 dq / 2 pi^2, per volume, -H_ex / V in units of (2 m rho g / hbar^2)^(3/2),
+as a function of beta*rho*g, the only parameter it depends on.
 
-Run:  python3 bogoliubov_equal_time.py   # prints Table S1 and the totals, writes
+Run:  python3 bogoliubov_equal_time.py   # prints the table and the totals, writes
                                          # fig_bose_equal_time.pdf/.png (a few seconds)
 Typography, colours, line width and marker size come from reproduce.py, so the
 figure reads as one set with benchmark.pdf and electron_gas/fig_fc_prl.pdf.
@@ -31,9 +32,9 @@ from reproduce import _rcparams, C_EXACT, C_CLOSED, LW
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_FIG = os.path.join(HERE, 'fig_bose_equal_time')
 
-BETAS = [0.2, 1.0, 5.0]          # beta * rho * g, as in Table S1
-Q_TABLE = [0.25, 0.5, 1.0, 2.0]  # the q of Table S1
-NMAX = 400000                    # Matsubara cutoff for Table S1
+BETAS = [0.2, 1.0, 5.0]          # beta * rho * g of the printed table
+Q_TABLE = [0.25, 0.5, 1.0, 2.0]  # the q of the printed table
+NMAX = 400000                    # Matsubara cutoff for the printed table
 Q_TAIL = 200.0                   # beyond: q^2 * equal-time term -> -1/(4 q^2), exact -> 0
 C_EQUAL = '#009E73'              # equal-time estimate (Okabe-Ito bluish green)
 LABEL_OURS = 'Closed form (ours)'
@@ -77,7 +78,7 @@ def closed_form_summand(w2, A, B):
 
 def h_closed_form(beta, q, nmax=None):
     """Eq. (Hex_explicit) for one mode. With nmax: the plain sum over |n| <= nmax
-    (Table S1). Without: the sum over |n| <= N, with omega_N >= 10 E, plus the
+    (the printed table). Without: the sum over |n| <= N, with omega_N >= 10 E, plus the
     remainder |n| > N by the Euler-Maclaurin formula, whose integral is exact
     because the summand has the antiderivative (w/2) ln((w^2 + A)/(w^2 + B)) in w."""
     eps, E = energies(q)

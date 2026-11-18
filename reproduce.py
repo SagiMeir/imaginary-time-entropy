@@ -3,7 +3,7 @@ Reproduce every number and figure in the spinless-fermion benchmark.
 
 Outputs, all written to ./ :
     entropy_data.json   H_exact, H_closed, H_num vs (beta, W) for the figure
-    free_energy.json     exact vs Gaussian-approximation beta*F_ex' for Table S2
+    free_energy.json     exact vs Gaussian-approximation beta*F_ex' for Table S1
     benchmark.pdf/.png   the four-panel figure
 
     entropy_data_L.json  the same three routes over ring sizes LS
