@@ -6,8 +6,10 @@ evaluated on the imaginary-time density correlation functions `F(q,τ)` of path
 integral Monte Carlo (PIMC) simulations of the spin-unpolarized uniform
 electron gas at `Θ = 1`, `r_s = 2, 5, 10, 20`, and compared with the
 parametrization fitted to quantum Monte Carlo (QMC) data. No model enters the
-input. A reconstruction of `S(q,ω_n)` from the PIMC `S(q)` with a static local
-field correction is computed as a check.
+input. A reconstruction of `S(q,ω_n)` from the PIMC `S(q)` alone, through
+Eqs. (4) and (9) of the Letter, is computed as a check: its multipliers do not
+depend on `n`, which amounts to a static local field correction `G(q)`
+(Supplemental Material, Sec. S7.3).
 
 This folder is self-contained apart from the shared figure typography, which it
 imports from `../reproduce.py` so every figure of the paper looks the same.
@@ -48,7 +50,8 @@ Hartree per electron. `+-` is the jackknife statistical error; `dev` is relative
 to the reference; `cell` is the value on the `N = 34` simulation cell, `FS shift`
 the finite-size correction added to reach the thermodynamic limit, `FS share`
 that correction's fraction of the total; `static G` is the deviation of the
-check with the static local field correction fitted to the same `S(q) = F(q,0)`.
+check, with `S(q,ω_n)` reconstructed from the same `S(q) = F(q,0)` by Eq. (9) of
+the Letter (a static local field correction).
 
 ## Method, per density
 
@@ -131,10 +134,12 @@ controls this.
   (`r_s = 20`) and 0.10% (`r_s = 10`) of `|f_c|` per `k_F`, close to the
   predicted 0.35% and 0.14%; at `r_s ≤ 5` it is below the noise. The sum stops
   at the last shell of the cell, `6.81 k_F`.
-- **Static-G check.** The static local field correction fitted to `S(q)`
-  reproduces `F(q,τ)` poorly at strong coupling (at `τ = β/2` it lies 3–10%
-  below the data for `q < 4 k_F` at `r_s = 20`), yet gives `f_c` within 0.9
-  percentage points of the data-based value (`static G` column).
+- **Static-G check.** The reconstruction from `S(q)` (Eq. (9) of the Letter)
+  reproduces `F(q,τ)` poorly at strong coupling (at `τ = β/2` it deviates from
+  the data for `q < 4 k_F` by up to 11% at `r_s = 20` and up to 3% at
+  `r_s = 5`), yet gives `f_c` within 0.9 percentage points of the data-based
+  value (`static G` column): the "nearly the same results" of the conclusions
+  of the Letter.
 - **Finite size.** The correction carries 49–68% of each value and is computed
   in the random phase approximation. Static reconstructions at `N = 34` and
   `N = 66` agree to 1.4% at `r_s = 20`.

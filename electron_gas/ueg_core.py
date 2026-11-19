@@ -24,7 +24,8 @@ f_c = (beta dF_corr[cell] + finite-size shift) / (N beta).
 
 The earlier input, kept as a check (estimate_f_c), reconstructs S(q, w_n) from
 the PIMC S(q) alone through a static local field correction G(q), solved shell
-by shell so that beta^-1 sum_n S(q, w_n) = S_PIMC(q) exactly.
+by shell so that beta^-1 sum_n S(q, w_n) = S_PIMC(q) exactly: Eq. (S_reconstructed)
+of the Letter with 2V lambda_q = U_q [1 - G(q)].
 
 Depends only on numpy and scipy.
 """

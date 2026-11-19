@@ -11,7 +11,12 @@ of a quantum many-body system to its density-density correlation function
 `S(q,ω_n)` and to that of a non-interacting reference, `S_0(q,ω_n)`, in closed
 form. This repository evaluates the closed forms for the three tests of the
 paper: the Bogoliubov gas, spinless fermions on a ring, and the warm dense
-electron gas.
+electron gas. For an instantaneous interaction, the closed forms can also be
+evaluated from the static structure factor `S(q)` and `S_0(q,ω_n)` alone, with
+`S(q,ω_n)` reconstructed through Eqs. (4) and (9) of the Letter. The repository
+does this for the ring (`reproduce.py --static`) and for the electron gas (the
+static-G check in `electron_gas/`); for the Bogoliubov gas the reconstruction is
+exact (Supplemental Material, Sec. S5.3).
 
 ## Where each item of the paper comes from
 
@@ -19,9 +24,10 @@ electron gas.
 |------|--------|--------|
 | Fig. 1 (Bogoliubov gas) | `bogoliubov_equal_time.py` | `fig_bose_equal_time.pdf` |
 | Fig. 2 (spinless fermions on a ring) | `reproduce.py` | `benchmark.pdf`, `entropy_data.json` |
+| `S(q)` as input on the ring (Eq. (9); conclusions of the Letter) | `reproduce.py --static` | `entropy_static.json` |
 | Table S1 (ring: exact and Gaussian free energies) | `reproduce.py` | `free_energy.json` |
 | Fig. S1 (ring sizes) | `benchmark_size.py` | `benchmark_size.pdf`, from `entropy_data_L.json` |
-| Fig. 3 (warm dense electron gas) and Table S2 | `electron_gas/reproduce_fc.py` | `electron_gas/fig_fc_prl.pdf`, `electron_gas/fc_data.json` |
+| Fig. 3 (warm dense electron gas) and Table S2, with the `S(q)`-input check | `electron_gas/reproduce_fc.py` | `electron_gas/fig_fc_prl.pdf`, `electron_gas/fc_data.json` |
 
 The figure and data files in the repository are the ones used in the paper.
 Running the scripts reproduces them.
@@ -34,6 +40,7 @@ The comments in the code name the equations of the Letter by their labels:
 | `Fex`          | Eq. (6), excess free energy |
 | `Hex_explicit` | Eq. (7), excess entropy |
 | `Fcorr`        | Eq. (8), correlation free energy |
+| `S_reconstructed` | Eq. (9), the multiplier `λ_q` from `S(q)` |
 
 ## Requirements
 
@@ -59,18 +66,34 @@ python3 bogoliubov_equal_time.py      # Fig. 1, a few seconds
 python3 reproduce.py                  # Fig. 2 and Table S1: 4 temperatures, free-energy table, figure (about 5 min)
 python3 reproduce.py --quick          # smoke test: βt = 2 only, no figure
 python3 reproduce.py --figure-only    # redraw benchmark.pdf from entropy_data.json
+python3 reproduce.py --static         # closed form from S(q) alone (Eq. (9), SM Sec. S2.7) at the 16 points of Fig. 2,
+                                      # writes entropy_static.json (about 1.5 min)
 python3 benchmark_size.py             # Fig. S1, from entropy_data_L.json, about 1.5 min
 python3 reproduce.py --scan-L         # finite-size sweep behind entropy_data_L.json (resumable, hours)
 python3 reproduce.py --figure-L-only  # 4×4 figure of the sweep, from entropy_data_L.json
 cd electron_gas && python3 reproduce_fc.py   # Fig. 3 and Table S2, see electron_gas/README.md
 ```
 
+`reproduce.py --static` evaluates the closed form with the static structure
+factor `S(q)` as the only correlation input (Eq. (9) of the Letter;
+Supplemental Material, Sec. S2.7): multipliers independent of `n`, one root of
+Eq. (9) per `q` (solved in the form of Eq. (S69)), the reconstructed
+`S(q,ω_n)` from Eq. (4), and `H_rel` from Eq. (5) with it (Eq. (S71)),
+converted to `H` with the same rescaled reference and exact kinetic energy as
+Fig. 2. This is the ring part of the statement in the conclusions of the
+Letter that `S(q)` and `S_0(q,ω_n)` give nearly the same results: at all 16
+points of Fig. 2, `H` from `S(q)` differs from the closed form with the full
+`S(q,ω_n)` by at most 0.41% of the exact entropy (`βt = 4`, `W/t = 1`:
+−34.21% against −34.62%), and it is never farther from the exact entropy. If
+`entropy_data.json` is present, it prints the closed form of Fig. 2 alongside.
+
 `reproduce.py`, `bogoliubov_equal_time.py` and `benchmark_size.py` read and
 write in the current working directory. `electron_gas/reproduce_fc.py` writes
 next to itself.
 
 **`--quick` overwrites `entropy_data.json`** with the four `βt = 2` points, after
-which `--figure-only` fails. Run it in a copy to keep the full data set.
+which `--figure-only` fails. Run it in a copy to keep the full data set. With
+`--static`, `--quick` likewise overwrites `entropy_static.json`.
 
 The first run of `electron_gas/reproduce_fc.py` downloads its input data
 (430 MB) from the RODARE repository; see `electron_gas/README.md`.
@@ -155,6 +178,14 @@ Benchmark (`python3 reproduce.py`):
   at `βt = 0.5, 1, 2, 4`: exact curve (exact diagonalization on a 25-point `W`
   grid), numerical route (small blue dots), closed form (orange open circles).
   The closed-form relative error at `W/t = 1` is printed to the terminal.
+
+`S(q)` as input (`python3 reproduce.py --static`):
+
+- `entropy_static.json`: for every `(βt, W/t)` of Fig. 2: `beta`, `W`,
+  `gamma_star`, `H_exact`, `H_static` (from `S(q)` alone),
+  `relerr_static = (H_static − H_exact) / H_exact`, `two_N_lambda_q` (the roots
+  `2Nλ_q` of Eq. (9) for `k = 1, …, L − 1`) and `H_closed` (the closed form of
+  Fig. 2, copied from `entropy_data.json`).
 
 Finite-size scan (`--scan-L`), all rings at half filling:
 

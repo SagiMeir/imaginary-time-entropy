@@ -6,12 +6,15 @@ Outputs, all written to ./ :
     free_energy.json     exact vs Gaussian-approximation beta*F_ex' for Table S1
     benchmark.pdf/.png   the four-panel figure
 
+    entropy_static.json  H from S(q) alone (SM Sec. S2.7) at the points of Fig. 2
+
     entropy_data_L.json  the same three routes over ring sizes LS
     benchmark_L.pdf/.png  4x4 figure: rows = L at half filling, cols = beta t
 
 Run:  python3 reproduce.py            # tables + data + figure
       python3 reproduce.py --quick    # only beta t = 2 (fast smoke test)
       python3 reproduce.py --figure-only   # redraw from entropy_data.json
+      python3 reproduce.py --static        # S(q)-only closed form, SM Sec. S2.7
       python3 reproduce.py --scan-L        # finite-size sweep + 4x4 figure
       python3 reproduce.py --figure-L-only # redraw from entropy_data_L.json
 
@@ -171,6 +174,64 @@ def closed_form_entropy(beta, W, L=L, N=N):
 
 
 # ----------------------------------------------------------------------
+# 1b. Closed form from the static structure factor alone (SM Sec. S2.7):
+#     multipliers independent of n, lambda_{q,n} = lambda_q.  The ring part of
+#     the S(q)-input statement in the conclusions of the Letter; not part of
+#     Fig. 2; run with --static.
+# ----------------------------------------------------------------------
+def static_root(Sq, S0q, S0n, beta):
+    """Root x = 2 N lambda_q of Eq. (S_reconstructed) (SM Eq. (S67)),
+    S(q) = beta^-1 sum_n S0/(1 + x S0),
+    evaluated in the form of Eq. (S69),
+
+        S(q) = S0(q) - beta^-1 sum_n x S0^2 / (1 + x S0),
+
+    whose summand falls off as omega_n^-4.  The right-hand side decreases
+    monotonically in x, from +inf at x = -1/S0(q, 0) to 0, so the root is unique.
+    """
+    def f(x):
+        return S0q - np.sum(x * S0n ** 2 / (1.0 + x * S0n)) / beta - Sq
+    lo = -(1.0 - 1e-12) / S0n.max()
+    hi = 1.0
+    while f(hi) > 0:
+        hi *= 2.0
+    return brentq(f, lo, hi, xtol=1e-14, rtol=1e-14)
+
+
+def static_entropy_hrel(beta, W, L=L, N=N):
+    """H from the static structure factor S(q) alone (SM Sec. S2.7).
+
+    For each q, Eq. (S_reconstructed) fixes one multiplier from S(q) and the reference
+    S0(q, omega_n).  S_lambda = S0/(1 + 2N lambda_q S0) is then the inferred
+    correlation function, and H_rel is Eq. (H_rel_main) with S replaced by
+    S_lambda, Eq. (S71).  The assembly is that of closed_form_entropy_hrel:
+    rescaled reference gamma* and the exact kinetic energy,
+
+        H = H_rel(gamma*) + beta gamma* E_kin + ln I[0; gamma*],
+
+    so the comparison with Fig. 2 changes only the input, S(q) in place of
+    S(q, omega_n).  (S_lambda/S0 -> 1 at large |n| for any reference, so here
+    gamma* is not needed for convergence.)
+    Returns (H_static, H_exact, gamma*, [2 N lambda_q for q = 2 pi k / L]).
+    """
+    ns = np.arange(-NMAX, NMAX + 1)
+    inter = System(L, N, 1.0, W, beta)
+    g = gamma_star(inter, beta, L, N)
+    ref = System(L, N, g, 0.0, beta)
+    Sq, S0q = static_Sq(inter), static_Sq(ref)
+    Hrel, xs = 0.0, []
+    for k in range(1, L):
+        q = 2 * np.pi * k / L
+        S0n = ref.Sqn(q, ns)
+        x = static_root(Sq[k - 1], S0q[k - 1], S0n, beta)
+        xs.append(float(x))
+        y = x * S0n                                   # S0/S_lambda - 1
+        Hrel += 0.5 * np.sum(-np.log1p(y) - 1.0 / (1.0 + y) + 1.0)
+    lnIg = logsumexp(-beta * ref.E)
+    return Hrel + beta * g * kin(inter) + lnIg, inter.S_vn, g, xs
+
+
+# ----------------------------------------------------------------------
 # 2.  Numerical inference (exact Z_lambda, no Gaussian approximation)
 # ----------------------------------------------------------------------
 def numerical_entropy(beta, W, L=L, N=N):
@@ -257,6 +318,36 @@ def build_free_energy_table(beta=2.0):
         print(f"   {r['W']:<4} {r['bFex_ex']:8.4f}  {r['bFex_tr']:8.4f}  "
               f"{r['err_pct']:5.1f}   {r['cancel_pct']:5.1f}")
     return rows
+
+
+def build_static_data(betas, path='entropy_static.json'):
+    """The S(q)-only closed form (SM Sec. S2.7) at the points of Fig. 2, next to
+    the exact entropy and, when entropy_data.json is present, the closed form of
+    Fig. 2 from the full S(q, omega_n)."""
+    try:
+        full = json.load(open('entropy_data.json'))
+    except (OSError, ValueError):
+        full = {}
+    out = {}
+    print("   beta t  W/t    H_exact    from S(q) (Sec. S2.7)    "
+          "from S(q,w_n) (Fig. 2)")
+    for beta in betas:
+        for W in WS:
+            hs, ex, g, xs = static_entropy_hrel(beta, W)
+            key = f"{beta}_{W}"
+            row = dict(beta=beta, W=W, gamma_star=g, H_exact=ex, H_static=hs,
+                       relerr_static=(hs - ex) / ex, two_N_lambda_q=xs)
+            line = (f"   {beta:<6} {W:<5} {ex:9.5f}   "
+                    f"{hs:9.5f} ({100 * (hs - ex) / ex:+7.2f}%)")
+            cf = full.get(key, {}).get('H_closed')
+            if cf is not None:
+                row['H_closed'] = cf
+                line += f"     {cf:9.5f} ({100 * (cf - ex) / ex:+7.2f}%)"
+            out[key] = row
+            print(line, flush=True)
+    json.dump(out, open(path, 'w'), indent=1)
+    print(f"\n  wrote {path}")
+    return out
 
 
 # ----------------------------------------------------------------------
@@ -682,6 +773,12 @@ if __name__ == '__main__':
         sys.exit(0)
     if '--figure-L-only' in sys.argv:
         make_figure_L(json.load(open(SCAN_JSON)), LS, excess, annot)
+        print("\nDone.")
+        sys.exit(0)
+    if '--static' in sys.argv:
+        # closed form from S(q) alone (SM Sec. S2.7) at the points of Fig. 2
+        print("Closed form from the static structure factor alone (SM Sec. S2.7):")
+        build_static_data([2.0] if quick else BETAS)
         print("\nDone.")
         sys.exit(0)
     if '--figure-only' in sys.argv:
